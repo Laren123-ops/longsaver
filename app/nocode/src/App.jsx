@@ -1,3 +1,4 @@
+useEffect
 import { supabase } from './supabaseClient'
 
 export default function App() {
