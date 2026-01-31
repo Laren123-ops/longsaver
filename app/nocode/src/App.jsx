@@ -6,10 +6,12 @@ export default function App() {
     if (!email) return
 
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+  email,
   options: {
-    emailRedirectTo: `${window.location.origin}/auth/callback`,
-    })
+    emailRedirectTo: window.location.origin, // ← 回到根域名，最稳
+  },
+})
+
 
     alert(error ? error.message : '已发送登录邮件，去邮箱点链接登录')
   }
