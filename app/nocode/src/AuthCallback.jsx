@@ -3,15 +3,33 @@ import { supabase } from "./supabaseClient"
 
 export default function AuthCallback() {
   useEffect(() => {
-    ;(async () => {
-      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
+    const run = async () => {
+      const url = window.location.href
+      const hasCode = new URL(url).searchParams.get("code")
+
+      let error = null
+
+      if (hasCode) {
+        // ✅ PKCE 回调：用 code 换 session
+        const res = await supabase.auth.exchangeCodeForSession(url)
+        error = res.error
+      } else {
+        // ✅ 旧版隐式流：吃 hash 里的 access_token
+        const res = await supabase.auth.getSessionFromUrl({ storeSession: true })
+        error = res.error
+      }
+
       if (error) {
         alert(error.message)
       }
-      // 不管成功失败，都回主页（成功的话 session 已经存了）
+
+      // ✅ 清理 URL，回到主页
+      window.history.replaceState({}, document.title, "/")
       window.location.replace("/")
-    })()
+    }
+
+    run()
   }, [])
 
-  return <div style={{ padding: 24 }}>Logging you in...</div>
+  return <div style={{ padding: 24 }}>Logging in...</div>
 }
