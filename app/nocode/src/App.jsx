@@ -1,7 +1,46 @@
-useEffect
+
 import { supabase } from './supabaseClient'
 
+export default function App(import { useEffect, useState } from "react"
+import { supabase } from "./supabaseClient"
+
 export default function App() {
+  const [session, setSession] = useState(null)
+
+  useEffect(() => {
+    ;(async () => {
+      // 1) 如果是 magic link 回跳（#access_token=...），把它换成 session 并存起来
+      const hasAccessToken = window.location.hash.includes("access_token=")
+      const hasCode = window.location.search.includes("code=") // 兼容某些配置会返回 ?code=
+
+      if (hasAccessToken) {
+        const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
+        if (error) console.error("getSessionFromUrl error:", error)
+        // 清理 URL（不然你每次刷新都会重复解析）
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.search)
+      } else if (hasCode) {
+        const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
+        if (error) console.error("exchangeCodeForSession error:", error)
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
+
+      // 2) 读出当前 session
+      const { data } = await supabase.auth.getSession()
+      setSession(data.session)
+    })()
+
+    // 3) 监听登录状态变化
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
+  // 下面你想怎么渲染都行：未登录显示登录按钮；已登录显示你的 LongSaver 页面
+  // 你现在先保留“测试页按钮”也可以
+  ...
+}
+) {
   const signIn = async () => {
     const email = prompt('输入邮箱（会发 magic link）')
     if (!email) return
