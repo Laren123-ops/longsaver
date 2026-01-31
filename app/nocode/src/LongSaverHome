@@ -1,114 +1,11 @@
-import { useEffect, useState } from "react"
-import { supabase } from "./supabaseClient"
-
+// app/nocode/src/LongSaverHome.jsx
 export default function LongSaverHome({ user }) {
-  const [rows, setRows] = useState([])
-  const [loading, setLoading] = useState(false)
-
-  const [amount, setAmount] = useState("12.34")
-  const [category, setCategory] = useState("food")
-  const [note, setNote] = useState("")
-
-  const loadExpenses = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from("expenses")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50)
-
-    setLoading(false)
-
-    if (error) return alert(error.message)
-    setRows(data ?? [])
-  }
-
-  useEffect(() => {
-    loadExpenses()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const insertOne = async () => {
-    const v = Number(amount)
-    if (Number.isNaN(v)) return alert("amount 不是数字")
-
-    const { error } = await supabase.from("expenses").insert({
-      user_id: user.id,
-      amount: v,
-      category,
-      note,
-    })
-
-    if (error) return alert(error.message)
-    alert("插入成功 ✅")
-    setNote("")
-    loadExpenses()
-  }
-
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    alert("已登出")
-  }
-
   return (
     <div style={{ padding: 24 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 style={{ margin: 0 }}>LongSaver</h2>
-        <div>
-          <span style={{ marginRight: 12, fontSize: 12, opacity: 0.7 }}>{user.email}</span>
-          <button onClick={signOut}>登出</button>
-        </div>
-      </div>
+      <h1>LongSaver</h1>
+      <p>已登录：{user?.email}</p>
 
-      <hr style={{ margin: "16px 0" }} />
-
-      <h3>记一笔</h3>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-        <label>
-          amount：
-          <input value={amount} onChange={(e) => setAmount(e.target.value)} style={{ marginLeft: 6 }} />
-        </label>
-
-        <label>
-          category：
-          <input value={category} onChange={(e) => setCategory(e.target.value)} style={{ marginLeft: 6 }} />
-        </label>
-
-        <label>
-          note：
-          <input value={note} onChange={(e) => setNote(e.target.value)} style={{ marginLeft: 6, width: 220 }} />
-        </label>
-
-        <button onClick={insertOne}>插入</button>
-        <button onClick={loadExpenses} disabled={loading}>
-          {loading ? "刷新中..." : "刷新列表"}
-        </button>
-      </div>
-
-      <h3 style={{ marginTop: 24 }}>最近记录</h3>
-      {rows.length === 0 ? (
-        <div style={{ opacity: 0.7 }}>{loading ? "加载中..." : "暂无数据（或 RLS/表结构不匹配）"}</div>
-      ) : (
-        <div style={{ marginTop: 8 }}>
-          {rows.map((r) => (
-            <div
-              key={r.id}
-              style={{
-                padding: 12,
-                border: "1px solid #eee",
-                borderRadius: 8,
-                marginBottom: 8,
-              }}
-            >
-              <div>
-                <b>{r.category}</b> - {r.amount}
-              </div>
-              <div style={{ fontSize: 12, opacity: 0.7 }}>{r.note || "-"}</div>
-              <div style={{ fontSize: 12, opacity: 0.6 }}>{r.created_at || ""}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* 这里粘贴/渲染你原来做好的页面内容 */}
     </div>
   )
 }
