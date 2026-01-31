@@ -1,13 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js"
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY // 你的是 sb_publishable 也可以
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    flowType: 'pkce',          // ✅ 关键：不用 #access_token 了
-    detectSessionInUrl: true,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
   },
 })
