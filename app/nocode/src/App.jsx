@@ -1,79 +1,54 @@
-import LongSaverHome from "./LongSaverHome"
 import { useEffect, useState } from "react"
 import { supabase } from "./supabaseClient"
 
+// ✅ 改成你原页面组件的真实路径：
+// 例1：如果是 src/pages/LongSaverHome.jsx
+// import LongSaverHome from "./pages/LongSaverHome"
+// 例2：如果就是 src/LongSaverHome.jsx
+import LongSaverHome from "./LongSaverHome"
+
 export default function App() {
   const [user, setUser] = useState(null)
-  const [sending, setSending] = useState(false)
-  const [cooldown, setCooldown] = useState(0)
 
   useEffect(() => {
-    let unsub = null
-    let timer = null
-
+    // 吃掉 magic link 回来的 token / code
     const init = async () => {
-      // 1) 吃 magic link 回来的 token，并把 session 存起来
-      const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
-      if (error) console.log("getSessionFromUrl error:", error.message)
+      const url = new URL(window.location.href)
+      const code = url.searchParams.get("code")
 
-      // 2) 清理 URL 的 hash（避免刷新反复处理）
-      if (window.location.hash && window.location.hash.includes("access_token")) {
-        window.history.replaceState(
-          {},
-          document.title,
-          window.location.pathname + window.location.search
-        )
+      if (code) {
+        await supabase.auth.exchangeCodeForSession(code)
+        window.history.replaceState({}, document.title, window.location.pathname)
+      } else {
+        await supabase.auth.getSessionFromUrl({ storeSession: true })
+        if (window.location.hash.includes("access_token")) {
+          window.history.replaceState({}, document.title, window.location.pathname)
+        }
       }
 
-      // 3) 读一次当前 user
-      const { data: userData } = await supabase.auth.getUser()
-      setUser(userData?.user ?? null)
+      const { data } = await supabase.auth.getUser()
+      setUser(data?.user ?? null)
 
-      // 4) 监听登录/登出变化
-      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
         setUser(session?.user ?? null)
       })
-      unsub = sub?.subscription
+
+      return () => sub?.subscription?.unsubscribe()
     }
 
     init()
-
-    // cooldown 倒计时
-    if (cooldown > 0) {
-      timer = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000)
-    }
-
-    return () => {
-      unsub?.unsubscribe()
-      if (timer) clearInterval(timer)
-    }
-  }, [cooldown])
+  }, [])
 
   const signIn = async () => {
-    if (sending || cooldown > 0) return
     const email = prompt("输入邮箱（会发 magic link）")
     if (!email) return
 
-    setSending(true)
-
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        // ✅ 关键：Vercel 上用 origin 就行（不用 /auth/callback）
-        emailRedirectTo: window.location.origin,
-      },
+      options: { emailRedirectTo: window.location.origin },
     })
 
-    setSending(false)
-
-    if (error) {
-      alert(error.message)
-      if (String(error.message).toLowerCase().includes("rate limit")) setCooldown(60)
-      return
-    }
-
-    alert("已发送登录邮件，去邮箱点链接完成登录。")
-    setCooldown(20)
+    alert(error ? error.message : "已发送登录邮件，去邮箱点链接完成登录。")
   }
 
   const insertOne = async () => {
@@ -82,7 +57,6 @@ export default function App() {
     if (!userData?.user) return alert("你还没登录，请先点“邮箱登录”。")
 
     const u = userData.user
-
     const { error } = await supabase.from("expenses").insert({
       user_id: u.id,
       amount: 12.34,
@@ -93,24 +67,22 @@ export default function App() {
     alert(error ? error.message : "插入成功 ✅")
   }
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    alert("已登出")
-  }
-
-  // ✅✅✅ 关键改动：登录后直接渲染 LongSaverHome
-  if (user) {
-    return <LongSaverHome user={user} />
-  }
-
-  // 未登录：继续显示你现在这个测试页面
   return (
-    <div style={{ padding: 24 }}>
-      <h2>LongSaver Supabase Test</h2>
+    <div>
+      {/* ✅ 这块只是加的“Supabase 小工具栏”，不会覆盖你原页面 */}
+      <div style={{ padding: 12, borderBottom: "1px solid #eee" }}>
+        <span style={{ marginRight: 12 }}>
+          {user ? `已登录：${user.email}` : "未登录"}
+        </span>
 
-      <div style={{ marginBottom: 12 }}>
-        当前状态：{user ? `已登录：${user.email}` : "未登录"}
+        <button onClick={signIn}>邮箱登录</button>
+        <button onClick={insertOne} style={{ marginLeft: 8 }}>
+          插入一条记账
+        </button>
       </div>
 
-      <button onClick={signIn} disabled={sending || cooldown > 0}>
-        {sen
+      {/* ✅ 这里是你原来的 LongSaver 页面 */}
+      <LongSaverHome user={user} />
+    </div>
+  )
+}
