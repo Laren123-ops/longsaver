@@ -51,7 +51,7 @@ export default function App() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: window.location.origin, // ✅ 回到 https://longsaver-xftw.vercel.app
+        emailRedirectTo: `${window.location.origin}/auth/callback`,// ✅ 回到 https://longsaver-xftw.vercel.app
       },
     })
     setSending(false)
