@@ -7,7 +7,8 @@ export default function App() {
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin },
+  options: {
+    emailRedirectTo: `${window.location.origin}/auth/callback`,
     })
 
     alert(error ? error.message : '已发送登录邮件，去邮箱点链接登录')
