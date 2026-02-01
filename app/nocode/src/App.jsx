@@ -2,7 +2,11 @@ import { useEffect, useState } from "react"
 import { supabase } from "./supabaseClient"
 import LongSaverHome from "./LongSaverHome"
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import AuthedApp from "./AuthedApp";
 
+if (user) {
+  return <AuthedApp />;
+}
 export default function App() {
   const [user, setUser] = useState(null)
   const [sending, setSending] = useState(false)
