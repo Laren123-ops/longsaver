@@ -7,8 +7,9 @@ export const supabase = createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true, // ✅ 让它自动从 #access_token 里抓 session
-      flowType: "implicit",      // ✅ 你现在邮件返回的是 hash token，就用 implicit
+      detectSessionInUrl: true, // ✅ 让回调页自动处理 URL
+      // flowType: "implicit",    // ❌ 删掉
+      // flowType: "pkce",        // ✅ 可写可不写（v2 默认就是 pkce）
     },
   }
 )
