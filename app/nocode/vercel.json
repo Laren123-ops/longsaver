@@ -1,3 +1,5 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "installCommand": "cd app/nocode && yarn install",
+  "buildCommand": "cd app/nocode && yarn build",
+  "outputDirectory": "app/nocode/build"
 }
