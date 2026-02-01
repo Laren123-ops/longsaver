@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "./supabaseClient"
 import LongSaverHome from "./LongSaverHome"
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 export default function App() {
   const [user, setUser] = useState(null)
