@@ -1,32 +1,37 @@
-import { useEffect } from "react"
-import { supabase } from "./supabaseClient"
+import { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
 
 export default function AuthCallback() {
+  const [msg, setMsg] = useState("处理中...");
+
   useEffect(() => {
-    const run = async () => {
-      const href = window.location.href
+    (async () => {
+      try {
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code"); // PKCE 会带 ?code=...
 
-      // 1) PKCE: ?code=...
-      if (href.includes("code=")) {
-        const { error } = await supabase.auth.exchangeCodeForSession(href)
-        if (error) {
-          alert("登录失败: " + error.message)
-          return
+        if (code) {
+          // PKCE: 需要用 code 换 session
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+        } else {
+          // Implicit: token 在 hash 里，detectSessionInUrl 会自动吃掉
+          // 这里主动读一下，确保 session 落地
+          const { data, error } = await supabase.auth.getSession();
+          if (error) throw error;
+          if (!data.session) {
+            throw new Error("Auth session missing (no session after callback).");
+          }
         }
-      } else {
-        // 2) Implicit: #access_token=...
-        const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
-        if (error) {
-          alert("登录失败: " + error.message)
-          return
-        }
+
+        setMsg("登录成功，正在跳转...");
+        window.location.replace("/"); // 回到你的主页面
+      } catch (e) {
+        console.error(e);
+        setMsg("登录失败：" + (e?.message || String(e)));
       }
+    })();
+  }, []);
 
-      window.location.replace("/")
-    }
-
-    run()
-  }, [])
-
-  return <div style={{ padding: 24 }}>登录中…</div>
+  return <div style={{ padding: 24 }}>{msg}</div>;
 }
