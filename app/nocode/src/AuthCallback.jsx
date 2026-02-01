@@ -9,7 +9,7 @@ export default function AuthCallback() {
       try {
         const url = new URL(window.location.href);
 
-        // ✅ 先处理 Supabase 回传的错误
+        // 1) Supabase 回传错误（例如 otp_expired）
         const err = url.searchParams.get("error");
         const errDesc = url.searchParams.get("error_description");
         if (err) {
@@ -17,17 +17,13 @@ export default function AuthCallback() {
           return;
         }
 
-        // ✅ PKCE：用 code 换 session
-        const code = url.searchParams.get("code");
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-        }
+        // 2) implicit：token 在 hash 里，supabase 会自动处理（detectSessionInUrl: true）
+        // 稍等一下再确认 session 是否落地
+        await new Promise((r) => setTimeout(r, 200));
 
-        // ✅ 确认 session 已落地
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
-        if (!data.session) throw new Error("session missing");
+        if (!data.session) throw new Error("session missing (token not stored)");
 
         setMsg("登录成功，正在跳转...");
         window.location.replace("/");
@@ -37,11 +33,5 @@ export default function AuthCallback() {
     })();
   }, []);
 
-  return (
-    <div style={{ padding: 24 }}>
-      <h2>Auth Callback</h2>
-      <p>{msg}</p>
-      <button onClick={() => window.location.replace("/")}>回到首页</button>
-    </div>
-  );
+  return <div style={{ padding: 24 }}>{msg}</div>;
 }
