@@ -1,35 +1,25 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { supabase } from "./supabaseClient"
 
 export default function AuthCallback() {
+  const [msg, setMsg] = useState("登录处理中…")
+
   useEffect(() => {
     const run = async () => {
-      const url = window.location.href
-      const hasCode = new URL(url).searchParams.get("code")
-
-      let error = null
-
-      if (hasCode) {
-        // ✅ PKCE 回调：用 code 换 session
-        const res = await supabase.auth.exchangeCodeForSession(url)
-        error = res.error
-      } else {
-        // ✅ 旧版隐式流：吃 hash 里的 access_token
-        const res = await supabase.auth.getSessionFromUrl({ storeSession: true })
-        error = res.error
-      }
+      // ✅ PKCE：用 URL 里的 ?code=... 换 session
+      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
 
       if (error) {
-        alert(error.message)
+        setMsg("登录失败：" + error.message)
+        return
       }
 
-      // ✅ 清理 URL，回到主页
-      window.history.replaceState({}, document.title, "/")
-      window.location.replace("/")
+      setMsg("登录成功，正在跳回首页…")
+      window.location.replace("/") // 回到首页 App.jsx -> 读取到 user -> 进入 LongSaverHome
     }
 
     run()
   }, [])
 
-  return <div style={{ padding: 24 }}>Logging in...</div>
+  return <div style={{ padding: 24 }}>{msg}</div>
 }
