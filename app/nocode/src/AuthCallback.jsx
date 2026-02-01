@@ -4,14 +4,27 @@ import { supabase } from "./supabaseClient"
 export default function AuthCallback() {
   useEffect(() => {
     const run = async () => {
-      // ✅ PKCE：把 ?code=... 交换成 session，并存到 localStorage
-      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
-      if (error) {
-        alert(error.message)
+      const href = window.location.href
+
+      // 1) PKCE: ?code=...
+      if (href.includes("code=")) {
+        const { error } = await supabase.auth.exchangeCodeForSession(href)
+        if (error) {
+          alert("登录失败: " + error.message)
+          return
+        }
+      } else {
+        // 2) Implicit: #access_token=...
+        const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
+        if (error) {
+          alert("登录失败: " + error.message)
+          return
+        }
       }
-      // ✅ 回主页（你的 LongSaver 主页在 /）
+
       window.location.replace("/")
     }
+
     run()
   }, [])
 
