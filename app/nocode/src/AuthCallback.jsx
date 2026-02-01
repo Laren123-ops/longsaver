@@ -1,25 +1,19 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { supabase } from "./supabaseClient"
 
 export default function AuthCallback() {
-  const [msg, setMsg] = useState("登录处理中…")
-
   useEffect(() => {
     const run = async () => {
-      // ✅ PKCE：用 URL 里的 ?code=... 换 session
+      // ✅ PKCE：把 ?code=... 交换成 session，并存到 localStorage
       const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
-
       if (error) {
-        setMsg("登录失败：" + error.message)
-        return
+        alert(error.message)
       }
-
-      setMsg("登录成功，正在跳回首页…")
-      window.location.replace("/") // 回到首页 App.jsx -> 读取到 user -> 进入 LongSaverHome
+      // ✅ 回主页（你的 LongSaver 主页在 /）
+      window.location.replace("/")
     }
-
     run()
   }, [])
 
-  return <div style={{ padding: 24 }}>{msg}</div>
+  return <div style={{ padding: 24 }}>登录中…</div>
 }
