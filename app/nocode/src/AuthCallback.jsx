@@ -8,30 +8,40 @@ export default function AuthCallback() {
     (async () => {
       try {
         const url = new URL(window.location.href);
-        const code = url.searchParams.get("code"); // PKCE 会带 ?code=...
 
-        if (code) {
-          // PKCE: 需要用 code 换 session
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-        } else {
-          // Implicit: token 在 hash 里，detectSessionInUrl 会自动吃掉
-          // 这里主动读一下，确保 session 落地
-          const { data, error } = await supabase.auth.getSession();
-          if (error) throw error;
-          if (!data.session) {
-            throw new Error("Auth session missing (no session after callback).");
-          }
+        // ✅ 先处理 Supabase 回传的错误
+        const err = url.searchParams.get("error");
+        const errDesc = url.searchParams.get("error_description");
+        if (err) {
+          setMsg(`登录失败：${decodeURIComponent(errDesc || err)}`);
+          return;
         }
 
+        // ✅ PKCE：用 code 换 session
+        const code = url.searchParams.get("code");
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+        }
+
+        // ✅ 确认 session 已落地
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        if (!data.session) throw new Error("session missing");
+
         setMsg("登录成功，正在跳转...");
-        window.location.replace("/"); // 回到你的主页面
+        window.location.replace("/");
       } catch (e) {
-        console.error(e);
         setMsg("登录失败：" + (e?.message || String(e)));
       }
     })();
   }, []);
 
-  return <div style={{ padding: 24 }}>{msg}</div>;
+  return (
+    <div style={{ padding: 24 }}>
+      <h2>Auth Callback</h2>
+      <p>{msg}</p>
+      <button onClick={() => window.location.replace("/")}>回到首页</button>
+    </div>
+  );
 }
