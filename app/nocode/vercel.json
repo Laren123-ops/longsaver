@@ -1,5 +1,5 @@
 {
-  "installCommand": "cd app/nocode && yarn install",
-  "buildCommand": "cd app/nocode && yarn build",
-  "outputDirectory": "app/nocode/build"
+  "installCommand": "yarn install",
+  "buildCommand": "yarn build",
+  "outputDirectory": "build"
 }
